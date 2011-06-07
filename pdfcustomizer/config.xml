@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<module>
+	<name>pdfcustomizer</name>
+	<displayName>PDF customizer</displayName>
+	<version>N/A</version>
+	<description>Manage PDF templating and dynamic feature input</description>
+	<author>Media City Online (Wade Penistone)</author>
+	<tab>billing_invoicing</tab>
+	<confirmUninstall>Are you sure you want to delete the settings for PDF customizer, and revert back to the default PrestaShop PDF template?</confirmUninstall>
+	<is_configurable>1</is_configurable>
+	<need_instance>1</need_instance>
+</module>
