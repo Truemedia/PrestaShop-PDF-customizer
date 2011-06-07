@@ -36,15 +36,15 @@ class PDFCustomizer extends Module
 	public function __construct()
 	{
 	 	$this->name = 'pdfcustomizer';
-	 	$this->tab = 'front_office_features';
-	 	$this->version = '1.4';
-		$this->author = 'PrestaShop';
+	 	$this->tab = 'billing_invoicing';
+	 	$this->version = 'N/A';
+		$this->author = 'Media City Online (Wade Penistone)';
 
 	 	parent::__construct();
 
-        $this->displayName = $this->l('Link block');
-        $this->description = $this->l('Adds a block with additional links.');
-		$this->confirmUninstall = $this->l('Are you sure you want to delete all your links ?');
+        $this->displayName = $this->l('PDF customizer');
+        $this->description = $this->l('Manage PDF templating and dynamic feature input');
+		$this->confirmUninstall = $this->l('Are you sure you want to delete the settings for PDF customizer, and revert back to the default PrestaShop PDF template?');
 	}
 	
 	public function install()
@@ -65,7 +65,7 @@ class PDFCustomizer extends Module
 	 		`text` varchar(64) NOT NULL,
 	 		PRIMARY KEY(`id_link`, `id_lang`))
 	 		ENGINE='._MYSQL_ENGINE_.' default CHARSET=utf8') OR
-		 	!Configuration::updateValue('PS_BLOCKLINK_TITLE', array('1' => 'PDF customizer', '2' => 'Bloc lien')))
+		 	!Configuration::updateValue('PS_PDFCUSTOMIZER_TITLE', array('1' => 'PDF customizer', '2' => 'Bloc lien')))
 	 		return false;
 	 	return true;
 	}
@@ -75,8 +75,8 @@ class PDFCustomizer extends Module
 	 	if (!parent::uninstall() OR
 	 		!Db::getInstance()->Execute('DROP TABLE '._DB_PREFIX_.'pdfcustomizer') OR
 	 		!Db::getInstance()->Execute('DROP TABLE '._DB_PREFIX_.'pdfcustomizer_lang') OR
-	 		!Configuration::deleteByName('PS_BLOCKLINK_TITLE') OR
-	 		!Configuration::deleteByName('PS_BLOCKLINK_URL'))
+	 		!Configuration::deleteByName('PS_PDFCUSTOMIZER_TITLE') OR
+	 		!Configuration::deleteByName('PS_PDFCUSTOMIZER_URL'))
 	 		return false;
 	 	return true;
 	}
@@ -88,8 +88,8 @@ class PDFCustomizer extends Module
 		
 		$smarty->assign(array(
 			'pdfcustomizer_links' => $links,
-			'title' => Configuration::get('PS_BLOCKLINK_TITLE', $cookie->id_lang),
-			'url' => Configuration::get('PS_BLOCKLINK_URL'),
+			'title' => Configuration::get('PS_PDFCUSTOMIZER_TITLE', $cookie->id_lang),
+			'url' => Configuration::get('PS_PDFCUSTOMIZER_URL'),
 			'lang' => 'text_'.$cookie->id_lang
 		));
 	 	if (!$links)
@@ -106,7 +106,7 @@ class PDFCustomizer extends Module
 	{
 	 	$result = array();
 	 	/* Get id and url */
-	 	if (!$links = Db::getInstance()->ExecuteS('SELECT `id_link`, `url`, `new_window` FROM '._DB_PREFIX_.'pdfcustomizer'.((int)(Configuration::get('PS_BLOCKLINK_ORDERWAY')) == 1 ? ' ORDER BY `id_link` DESC' : '')))
+	 	if (!$links = Db::getInstance()->ExecuteS('SELECT `id_link`, `url`, `new_window` FROM '._DB_PREFIX_.'pdfcustomizer'.((int)(Configuration::get('PS_PDFCUSTOMIZER_ORDERWAY')) == 1 ? ' ORDER BY `id_link` DESC' : '')))
 	 		return false;
 	 	$i = 0;
 	 	foreach ($links AS $link)
@@ -181,9 +181,9 @@ class PDFCustomizer extends Module
 		$result = array();
 		foreach ($languages AS $language)
 			$result[$language['id_lang']] = $_POST['title_'.$language['id_lang']];
-	 	if (!Configuration::updateValue('PS_BLOCKLINK_TITLE', $result))
+	 	if (!Configuration::updateValue('PS_PDFCUSTOMIZER_TITLE', $result))
 	 		return false;
-	 	return Configuration::updateValue('PS_BLOCKLINK_URL', $_POST['title_url']);
+	 	return Configuration::updateValue('PS_PDFCUSTOMIZER_URL', $_POST['title_url']);
 	}
 	
 	public function getContent()
@@ -241,7 +241,7 @@ class PDFCustomizer extends Module
      	}
 		elseif (isset($_POST['submitOrderWay']))
 		{
-			if (Configuration::updateValue('PS_BLOCKLINK_ORDERWAY', (int)($_POST['orderWay'])))
+			if (Configuration::updateValue('PS_PDFCUSTOMIZER_ORDERWAY', (int)($_POST['orderWay'])))
 				$this->_html .= $this->displayConfirmation($this->l('Sort order updated'));
 			else
 				$this->_html .= $this->displayError($this->l('An error occurred during sort order set-up.'));
@@ -261,7 +261,7 @@ class PDFCustomizer extends Module
 		$languages = Language::getLanguages(false);
 		$divLangName = 'text¤title';
 		/* Title */
-	 	$title_url = Configuration::get('PS_BLOCKLINK_URL');
+	 	$title_url = Configuration::get('PS_PDFCUSTOMIZER_URL');
 
 	 	$this->_html .= '
 		<script type="text/javascript">
@@ -300,7 +300,7 @@ class PDFCustomizer extends Module
 		foreach ($languages as $language)
 			$this->_html .= '
 					<div id="title_'.$language['id_lang'].'" style="display: '.($language['id_lang'] == $defaultLanguage ? 'block' : 'none').'; float: left;">
-						<input type="text" name="title_'.$language['id_lang'].'" value="'.(($this->error AND isset($_POST['title'])) ? $_POST['title'] : Configuration::get('PS_BLOCKLINK_TITLE', $language['id_lang'])).'" /><sup> *</sup>
+						<input type="text" name="title_'.$language['id_lang'].'" value="'.(($this->error AND isset($_POST['title'])) ? $_POST['title'] : Configuration::get('PS_PDFCUSTOMIZER_TITLE', $language['id_lang'])).'" /><sup> *</sup>
 					</div>';
 		$this->_html .= $this->displayFlags($languages, $defaultLanguage, $divLangName, 'title', true);
 		$this->_html .= '
@@ -317,8 +317,8 @@ class PDFCustomizer extends Module
 				<label>'.$this->l('Order list:').'</label>
 				<div class="margin-form">
 					<select name="orderWay">
-						<option value="0"'.(!Configuration::get('PS_BLOCKLINK_ORDERWAY') ? 'selected="selected"' : '').'>'.$this->l('by most recent links').'</option>
-						<option value="1"'.(Configuration::get('PS_BLOCKLINK_ORDERWAY') ? 'selected="selected"' : '').'>'.$this->l('by oldest links').'</option>
+						<option value="0"'.(!Configuration::get('PS_PDFCUSTOMIZER_ORDERWAY') ? 'selected="selected"' : '').'>'.$this->l('by most recent links').'</option>
+						<option value="1"'.(Configuration::get('PS_PDFCUSTOMIZER_ORDERWAY') ? 'selected="selected"' : '').'>'.$this->l('by oldest links').'</option>
 					</select>
 				</div>
 				<div class="margin-form"><input type="submit" class="button" name="submitOrderWay" value="'.$this->l('Update').'" /></div>
